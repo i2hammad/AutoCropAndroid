@@ -44,6 +44,7 @@ public class Scanner {
         List<Point> result = new ArrayList<>();
         int[] cannyValue = new int[]{100, 150, 300};
         int[] blurValue = new int[]{3, 7, 11, 15};
+
         Mat image = resizeImage();
 
         for (int i = 0; i < 3; i++) {
@@ -68,8 +69,11 @@ public class Scanner {
 
 
                 if (contours.size() > 0) {
+
                     MatOfPoint contour = contours.get(0);
+
                     MatOfPoint2f contourFloat = toMatOfPointFloat(contour);
+
 
                     double arc = Imgproc.arcLength(contourFloat, true);
 
@@ -77,6 +81,7 @@ public class Scanner {
 
                     Imgproc.approxPolyDP(contourFloat, outDP, 0.01 * arc, true);
                     //筛选去除相近的点
+
                     List<Point> selectedPoints = selectPoints(outDP);
 
                     if (selectedPoints.size() != 4) {
@@ -207,9 +212,10 @@ public class Scanner {
 
 
     List<Point> selectPoints(MatOfPoint2f outDP) {
+
         List<Point> res = outDP.toList();
-        List<Point> points = new ArrayList<>();
-        points.addAll(res);
+        List<Point> points = new ArrayList<>(res);
+
         if (points.size() > 4) {
             Point p = points.get(0);
             double minX = p.x;

@@ -9,10 +9,10 @@ import android.util.Log;
 
 import com.i2hammad.autocropandroid.utils.CropUtils;
 
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.util.List;
 
 public class SmartCropper {
 
-    public static final String TAG  = SmartCropper.class.getName();
+    public static final String TAG = SmartCropper.class.getName();
     private static ImageDetector sImageDetector = null;
 
     public static void buildImageDetector(Context context) {
@@ -33,7 +33,7 @@ public class SmartCropper {
     public static void buildImageDetector(Context context, String modelFile) {
         try {
             sImageDetector = new ImageDetector(context, modelFile);
-            Log.e(TAG, "buildImageDetector: " );
+            Log.e(TAG, "buildImageDetector: ");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -46,12 +46,12 @@ public class SmartCropper {
      * @return 返回顶点数组，以 左上，右上，右下，左下排序
      */
     public static Point[] scan(Bitmap srcBmp) {
-        Log.e(TAG, "scan:" );
+        Log.e(TAG, "scan:");
         if (srcBmp == null) {
             throw new IllegalArgumentException("srcBmp cannot be null");
         }
         if (sImageDetector != null) {
-            Log.e(TAG, "sImageDetector not null:" );
+            Log.e(TAG, "sImageDetector not null:");
 
             Bitmap bitmap = sImageDetector.detectImage(srcBmp);
             if (bitmap != null) {
@@ -59,7 +59,7 @@ public class SmartCropper {
             }
         }
         Point[] outPoints = new Point[4];
-        Log.e(TAG, "outpoints:" );
+        Log.e(TAG, "outpoints:");
         scanImage(srcBmp, outPoints, sImageDetector == null);
         return outPoints;
     }
@@ -89,7 +89,7 @@ public class SmartCropper {
                 + CropUtils.getPointsDistance(rightTop, rightBottom)) / 2);
 
         Bitmap cropBitmap = Bitmap.createBitmap(cropWidth, cropHeight, Bitmap.Config.ARGB_8888);
-          cropImage(srcBmp, cropPoints, cropBitmap);
+        cropImage(srcBmp, cropPoints, cropBitmap);
         return cropBitmap;
     }
 
@@ -123,6 +123,46 @@ public class SmartCropper {
 
 
     static void cropImage(Bitmap srcBitmap, Point[] outPoints, Bitmap outPutImage) {
+        if (outPoints.length != 4) {
+            return;
+        }
+        Mat srcBitmapMat = new Mat();
+
+        Utils.bitmapToMat(srcBitmap, srcBitmapMat);
+
+
+        Point leftTop = outPoints[0];
+        Point rightTop = outPoints[1];
+        Point rightBottom = outPoints[2];
+        Point leftBottom = outPoints[3];
+
+        Mat dstBitmapMat ;
+        int newHeight = outPutImage.getHeight();
+        int newWidth = outPutImage.getWidth();
+        Size size = new Size(outPutImage.getWidth(), outPutImage.getHeight());
+
+        dstBitmapMat = Mat.zeros(size, srcBitmapMat.type());
+
+        Mat srcTriangle = new Mat();
+        Mat dstTriangle = new Mat();
+
+
+        srcTriangle.push_back(new MatOfPoint2f(new org.opencv.core.Point(leftTop.x, leftTop.y)));
+        srcTriangle.push_back(new MatOfPoint2f(new org.opencv.core.Point(rightTop.x, rightTop.y)));
+        srcTriangle.push_back(new MatOfPoint2f(new org.opencv.core.Point(leftBottom.x, leftBottom.y)));
+        srcTriangle.push_back(new MatOfPoint2f(new org.opencv.core.Point(rightBottom.x, rightBottom.y)));
+
+        dstTriangle.push_back(new MatOfPoint2f(new org.opencv.core.Point(0, 0)));
+        dstTriangle.push_back(new MatOfPoint2f(new org.opencv.core.Point(newWidth, 0)));
+        dstTriangle.push_back(new MatOfPoint2f(new org.opencv.core.Point(0, newHeight)));
+        dstTriangle.push_back(new MatOfPoint2f(new org.opencv.core.Point(newWidth, newHeight)));
+
+        Mat perspectiveTransform = Imgproc.getPerspectiveTransform(srcTriangle, dstTriangle);
+
+        Imgproc.warpPerspective(srcBitmapMat, dstBitmapMat, perspectiveTransform, dstBitmapMat.size());
+
+
+        Utils.matToBitmap(dstBitmapMat, outPutImage);
 
     }
 }
