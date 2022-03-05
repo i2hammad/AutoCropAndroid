@@ -1,0 +1,25 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" } // for this library
+        maven { url 'https://artifactory.mxtracks.info/artifactory/gradle-dev-local/' }
+        // for the OpenCV library
+
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" } // for this library
+        maven { url 'https://artifactory.mxtracks.info/artifactory/gradle-dev-local/' }
+        // for the OpenCV library
+
+    }
+}
+rootProject.name = "Auto Crop Android"
+include ':app'
+include ':AutoCropAndroid'
